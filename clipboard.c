@@ -51,7 +51,7 @@ sem_t *sem9;
 sem_t *stop_u;
 sem_t *stop_d;
 int clips_up=0;  
-int clips_down=0; // clipboards ligadoss a este
+int clips_down=0; // clipboards ligado a este
 int clip_id;
 int status[10];
 int countsent;
