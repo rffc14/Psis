@@ -1,7 +1,9 @@
-#include "clipboard.h"
+
 #include <stdlib.h>
 #include <pthread.h>
-#include <semaphore.h>	
+#include <semaphore.h>
+#include "clip_lib.h"	
+#include "clipboard.h"
 char data[REGIONS][MSG_LIMIT];
 void *listen_remote(void *arg);
 void *new_app(void *arg);
@@ -52,6 +54,7 @@ int status[10];
 int countsent;
 //char SEM={{"/sem0"},"/sem1","/sem2","/sem3","/sem4","/sem5","/sem6"
 //,"/sem7","/sem8","/sem9"};
+
 int main(int argc, char *argv[]){
 
 	int ConnectedMode=OFF;
@@ -99,6 +102,7 @@ int main(int argc, char *argv[]){
 			printf("Remote connecting error\n");
 			exit(-1);
 		}
+	printf("INitial update\n");
 	nbytes = recv(sockin_fd, &data, sizeof(char)*MSG_LIMIT*REGIONS, 0);
 	while(nbytes == -1){
 			printf("Waiting to read...");
@@ -138,7 +142,6 @@ int main(int argc, char *argv[]){
 	
 	pthread_join(thread_id[0],NULL); // a main thread espera pela listen local	
 	pthread_join(thread_id[1],NULL);
-	while(1);
 } //main end
 
 void * d_recvt(void *client_fd){
@@ -152,7 +155,6 @@ void * d_recvt(void *client_fd){
 	printf("\nORA VIVA d_recvt!!\n\n");
 
 	while(1){
-		//remote_data.option = INVALID_OPTION; /* TO GO OUT WHEN NO remote_data */
 		
 		check_recv = recv(client_fd, &remote_data, sizeof(remote_data), 0);
 		if (check_recv == -1){
@@ -186,10 +188,11 @@ void *d_sendt(void *client_fd){
 
 	//int client_fd=*(int *)arg;
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
-	//char *namesem = makes_name_sem(STOP_D);
-	//stop_d = sem_open(namesem,O_CREAT,0666,0);
-	//free(namesem);
-	stop_d = sem_open(STOP_D,O_CREAT,0666,0);
+	//char *namesemd = makes_name_sem(STOP_D);
+	char namesemd[100];
+	sprintf(namesemd, "/semd_%d", getpid());
+	//free(namesemd);
+	stop_d = sem_open(namesemd,O_CREAT,0666,0);
 	int nbytes;
 	int check_recv, option, region;
 	DATA remote_data;
@@ -374,6 +377,10 @@ void ctrl_c_callback_handler(int signum){
 	printf("Caught signal Ctr-C\n");
 	//char *namesemup = makes_name_sem(STOP_U);
 	//char *namesemd = makes_name_sem(STOP_D);
+	char namesemup[100];
+	sprintf(namesemup, "/semd_%d", getpid());
+	char namesemd[100];
+	sprintf(namesemd, "/semup_%d", getpid());
 	unlink("./CLIPBOARD_SOCKET");
 	sem_close(sem0);
 	sem_close(sem1);
@@ -387,10 +394,10 @@ void ctrl_c_callback_handler(int signum){
 	sem_close(sem9);
 	sem_close(stop_u);
 	sem_close(stop_d);
-	//sem_unlink(namesemup);
-	//sem_unlink(namesemd);
-	sem_unlink(STOP_U);
-	sem_unlink(STOP_D);
+	sem_unlink(namesemup);
+	sem_unlink(namesemd);
+	//sem_unlink(STOP_U);
+	//sem_unlink(STOP_D);
 	sem_unlink(SEM0);
 	sem_unlink(SEM1);
 	sem_unlink(SEM2);
@@ -415,6 +422,10 @@ void *new_app(void *client_fd){
 	int nbytes;
 	int ConnectedMode;
 	int sock_net;
+	char namesemd[100];
+	sprintf(namesemd, "/semd_%d", getpid());
+	char namesemup[100];
+	sprintf(namesemup, "/semup_%d", getpid());
 	//char *namesemup = makes_name_sem(STOP_U);
 	//char *namesemd = makes_name_sem(STOP_D);
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
@@ -427,10 +438,10 @@ void *new_app(void *client_fd){
 	sem7 = sem_open(SEM7,O_CREAT,0666,1);
 	sem8 = sem_open(SEM8,O_CREAT,0666,1);
 	sem9 = sem_open(SEM9,O_CREAT,0666,1);
-	//stop_u = sem_open(namesemup,O_CREAT,0666,0);
-	//stop_d = sem_open(namesemd,O_CREAT,0666,0);
-	stop_u = sem_open(STOP_U,O_CREAT,0666,0);
-	stop_d = sem_open(STOP_D,O_CREAT,0666,0);
+	stop_u = sem_open(namesemup,O_CREAT,0666,0);
+	stop_d = sem_open(namesemd,O_CREAT,0666,0);
+	//stop_u = sem_open(STOP_U,O_CREAT,0666,0);
+	//stop_d = sem_open(STOP_D,O_CREAT,0666,0);
 
 	//free(namesemup);
 	//free(namesemd);
@@ -462,7 +473,9 @@ void *new_app(void *client_fd){
 			region = new_data.region;
 			strcpy(data[region],new_data.characters);
 			status[region]=NOT_UPDATED;
-			sem_post(stop_u);
+			if (clips_down>0){
+				sem_post(stop_u);
+			}
 			sem_post(stop_d);
 			printf("\nMESSAGE RECEIVED: %s\n", new_data.characters);
 			printf("COPY OPTION\n");
@@ -507,14 +520,17 @@ void * new_rem_clip(void *client_fd){
 void * up_recvt(void * client_fd){
 	//int client_fd=*(int *)arg;
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
-	//char *namesem = makes_name_sem(STOP_U);
-	//stop_u = sem_open(namesem,O_CREAT,0666,0);
-	//free(namesem);
-	stop_u = sem_open(STOP_U,O_CREAT,0666,0);
+	//char *namesemu = makes_name_sem(STOP_U);
+	char namesemup[100];
+	sprintf(namesemup, "/semup_%d", getpid());
+	stop_u = sem_open(namesemup,O_CREAT,0666,0);
+	//free(namesemu);
+	//stop_u = sem_open(STOP_U,O_CREAT,0666,0);
 	DATA remote_data;
 	int check_recv, option, region;
 	int nbytes, i;
 	printf("ORA VIVA up_recvt!!\n\n");
+
 	while(1){
 		//remote_data.option = INVALID_OPTION; /* TO GO OUT WHEN NO remote_data */
 		printf("%d\n", check_recv);
@@ -557,13 +573,15 @@ void * up_recvt(void * client_fd){
 void * up_sendt(void * client_fd){
 
 	DATA send_data;
-	printf("inicio\n");
 	//int client_fd=*(int *)arg;
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
-	//char *namesem = makes_name_sem(STOP_U);
-	//stop_u = sem_open(namesem,O_CREAT,0666,0);
-	//free(namesem);
-	stop_u = sem_open(STOP_U,O_CREAT,0666,0);
+	//char *namesemu = makes_name_sem(STOP_U);
+	char namesemup[100];
+	sprintf(namesemup, "/semup_%d", getpid());
+	stop_u = sem_open(namesemup,O_CREAT,0666,0);
+	//free(namesemu);
+	
+	//stop_u = sem_open(STOP_U,O_CREAT,0666,0);
 	int nbytes;
 	int check_recv;
 	printf("EU ESTOU AQUI up_sendt!!\n");
@@ -613,4 +631,18 @@ char* makes_name_sem(char *sem){
 	free(buf2);
 
 	return buf;
+}
+
+void display_data(char data[REGIONS][MSG_LIMIT])
+{
+
+	int i, j;
+	
+	printf("\n\n---- CLIPBOARD ----\n\n");
+	printf("R\n");
+	for(i = 0; i < REGIONS; i++)
+		printf("%d: %s\n", i , data[i]);
+	//printf("\n");
+
+
 }

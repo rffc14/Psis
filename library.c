@@ -1,63 +1,6 @@
+
+#include "clip_lib.h"
 #include "clipboard.h"
-#include <pthread.h>
-
-char data[REGIONS][MSG_LIMIT] = {{'0'},{'0'},{'0'},{'0'},{'0'},{'0'},{'0'},{'0'},{'0'},{'0'}};
-
-
-int fetch_backup(char *IP, char *backup_data[REGIONS][MSG_LIMIT])
-{
-	
-	struct sockaddr_in server_addr;
-
-	int sockin_fd= socket(AF_INET, SOCK_STREAM, 0);
-
-	int nbytes;
-	
-	if (sockin_fd == -1){
-		perror("socket: ");
-		exit(-1);
-	}
-
-	server_addr.sin_family = AF_INET;
-
-	server_addr.sin_port= htons(3010);
-	inet_aton(IP, &server_addr.sin_addr);
-	 
-	
-	if( -1 == connect(sockin_fd, 
-			(const struct sockaddr *) &server_addr, 
-			sizeof(server_addr))){
-				printf("Error connecting\n");
-				exit(-1);
-	}
-
-	nbytes = recv(sockin_fd, &*backup_data, sizeof(char)*MSG_LIMIT*REGIONS, 0); 
-	while(nbytes == -1){
-			
-			printf("Waiting to read...");
-			nbytes = recv(sockin_fd, &*backup_data, sizeof(char)*MSG_LIMIT*REGIONS, 0); 
-	}
-	
-	return sockin_fd;
-
-
-}
-
-void display_data(char data[REGIONS][MSG_LIMIT])
-{
-
-	int i, j;
-	
-	printf("\n\n---- CLIPBOARD ----\n\n");
-	printf("R\n");
-	for(i = 0; i < REGIONS; i++)
-		printf("%d: %s\n", i , data[i]);
-	//printf("\n");
-
-
-}
-
-
 int clipboard_connect(char * clipboard_dir){
 	
 	struct sockaddr_un server_addr;
@@ -67,7 +10,7 @@ int clipboard_connect(char * clipboard_dir){
 	
 	if (sock_fd == -1){
 		perror("socket: ");
-		exit(-1);
+		return sock_fd;
 	}
 
 	client_addr.sun_family = AF_UNIX;
@@ -79,7 +22,7 @@ int clipboard_connect(char * clipboard_dir){
 	int err_c = connect(sock_fd, (const struct sockaddr *) &server_addr, sizeof(server_addr));
 	if(err_c==-1){
 		perror("Connecting: ");
-		exit(-1);
+		return -1;
 	}
 	return sock_fd;
 }
@@ -87,10 +30,18 @@ int clipboard_connect(char * clipboard_dir){
 
 
 int clipboard_copy(int clipboard_id, int region, void *buf, size_t count){
+
+	void sigpipe_handler(){};
+	signal(SIGPIPE,sigpipe_handler);
 	
 	int n;
 	int option = COPY;
 	DATA new_data;
+
+	if (region < 0 || region > 9){
+		printf("Invalid region, should just write digit between 0 and 9\n");
+		return 0;
+	}
 
 	char *msg = malloc(count*sizeof(char));
 
@@ -106,38 +57,30 @@ int clipboard_copy(int clipboard_id, int region, void *buf, size_t count){
 	free(msg);
 
 	n = send(clipboard_id, &new_data, sizeof(new_data), 0);
-	if (n<0){
-		exit(0);
+	if (n<=0){
+		printf("CLIPBOARD NOT AVAILABLE\n");
+		return 0;
 	}else{
 		return n;
 	}
 }
 
 
-void update_backup(int sock_net, int region, char *newdata){
-
-	int nbytes;
-	
-	DATA sent;
-	
-	strcpy(sent.characters, newdata);
-	
-	sent.region = region;
-  
-	nbytes = send(sock_net, &sent, sizeof(sent), 0);
-
-	if (nbytes < 0){
-		perror("write error");
-		exit(-1);
-	}
-
-}
 
 int clipboard_paste(int clipboard_id, int region, void *buf, size_t count){
+
+	void sigpipe_handler(){};
+	signal(SIGPIPE,sigpipe_handler);
 	
 	int n;
 	int option = PASTE;
 	DATA new_data;
+
+	if (region < 0 || region > 9){
+		printf("Invalid region, should just write digit between 0 and 9\n");
+		return 0;
+	}
+
 	char *msg = malloc(count*sizeof(char));
 
 	new_data.region = region;
@@ -146,20 +89,105 @@ int clipboard_paste(int clipboard_id, int region, void *buf, size_t count){
 	printf("clipboard PASTE\n");
 
 	n = send(clipboard_id, &new_data, sizeof(new_data), 0);
-	if (n<0){
-		perror("write error");
-		exit(-1);
+	if (n<=0){
+		printf("CLIPBOARD UNAVAILABLE\n");
+		free(msg);
+		return 0;
 	}
 
+	n = recv(clipboard_id, msg, count*sizeof(char), 0);
 			
-	while(recv(clipboard_id, msg, count*sizeof(char), 0) == -1){
-		printf("Waiting to read...");
+	while(n == -1){
+		n = recv(clipboard_id, msg, count*sizeof(char), 0);
+		if (n == 0) {
+			printf("CLIPBOARD EXITED\n"); 
+			free(msg);
+			return 0;
+		}
 	}
 
 	memcpy(buf, msg, count);
 
 	free(msg);
+
+	return n;
 	
+}
+
+
+
+int clipboard_wait(int clipboard_id, int region, void *buf, size_t count){
+
+	void sigpipe_handler(){};
+	signal(SIGPIPE,sigpipe_handler);
+
+	int n;
+	int option = PASTE;
+	DATA new_data;
+
+
+	if (region < 0 || region > 9){
+		printf("Invalid region, should just write digit between 0 and 9\n");
+		return 0;
+	}
+
+	new_data.region = region;
+	new_data.option = option;
+	
+	n = send(clipboard_id, &new_data, sizeof(new_data), 0);
+	if (n<0){
+		printf("INVALID CLIP_ID\n");
+		return 0;
+	}
+
+	if(n==0){ printf("CLIPBOARD EXITED\n"); return 0;}
+
+	char *current = malloc(count*sizeof(char));
+
+	n = recv(clipboard_id, current, count*sizeof(char), 0);
+			
+	while(n == -1){
+		n = recv(clipboard_id, current, count*sizeof(char), 0);
+		if(n == 0){ 
+			printf("CLIPBOARD EXITED\n"); 
+			free(current); 
+			return 0;
+		}
+	}
+
+	char *msg = malloc(count*sizeof(char));
+
+	memcpy(msg, current, count);
+
+	while(strcmp(current, msg) == 0){
+		n = send(clipboard_id, &new_data, sizeof(new_data), 0);
+		if (n<=0){
+			printf("CLIPBOARD EXITED\n");
+			free(msg);
+			free(current);
+			return 0;
+		}
+
+		n = recv(clipboard_id, msg, count*sizeof(char), 0);
+			
+		while(n == -1){
+			n = recv(clipboard_id, msg, count*sizeof(char), 0);
+			if(n == 0){ 
+				printf("CLIPBOARD EXITED\n"); 
+				free(msg);
+				free(current);
+				return 0;
+			}
+		}
+	}
+
+	memcpy(buf, msg, count);
+
+	free(current);
+
+	free(msg);
+
+	return n;
 }
 
 void clipboard_close(int clipboard_id){
