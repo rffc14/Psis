@@ -104,6 +104,7 @@ int main(int argc, char *argv[]){
 		(const struct sockaddr *) &server_addr, 
 		sizeof(server_addr))){
 			printf("Remote connecting error\n");
+			unlink(CLIPBOARD_SOCKET);
 			exit(-1);
 		}
 	//printf("INitial update\n");
