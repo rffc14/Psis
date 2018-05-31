@@ -484,7 +484,7 @@ void *new_app(void *client_fd){
 		option = new_data.option;
 
 		if (option == COPY){
-			sem_wait(sem0);
+			//sem_wait(sem0);
 			region = new_data.region;
 			strcpy(data[region],new_data.characters);
 			status[region]=NOT_UPDATED;
