@@ -432,7 +432,7 @@ void *new_app(void *client_fd){
 	int check_recv, option, region;
 	int nbytes;
 	int ConnectedMode;
-	int sock_net;
+	int sock_net, i;
 	char namesemd[100];
 	struct timespec time;
 	int time_stamp;
