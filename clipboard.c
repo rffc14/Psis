@@ -489,6 +489,10 @@ void *new_app(void *client_fd){
 			if (clips_down>0){
 				sem_post(stop_u);
 			}
+			for(i = 0; i < clips_down; i++){
+				printf("clips: %d\n", clips_down);
+				sem_post(stop_u);
+			}
 			sem_post(stop_d);
 			printf("\nMESSAGE RECEIVED: %s\n", new_data.characters);
 			printf("COPY OPTION\n");
@@ -565,10 +569,7 @@ void * up_recvt(void * client_fd){
 		//	countsent = clips_down;
 		//	while(countsent != 0){ sem_post(stop_u); sleep(1);}
 			rec_u = 0;
-			for(i = 0; i < clips_down; i++){
-				printf("clips: %d\n", clips_down);
-				sem_post(stop_u);
-			}
+			
 			printf("MAIS QUE 1!!!\n\n");
 			
 		}
