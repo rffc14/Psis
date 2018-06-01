@@ -4,16 +4,6 @@
 #include "clip_lib.h"	
 #include "clipboard.h"
 #include <time.h>
-#define SEM0 "/sem0"
-#define SEM1 "/sem1"
-#define SEM2 "/sem2"
-#define SEM3 "/sem3"
-#define SEM4 "/sem4"
-#define SEM5 "/sem5"
-#define SEM6 "/sem6"
-#define SEM7 "/sem7"
-#define SEM8 "/sem8"
-#define SEM9 "/sem9"
 sem_t *sems[10];
 sem_t *sem0;
 sem_t *sem1;
@@ -217,9 +207,9 @@ void * new_sync_app (arg *client_fd){
 	}
 
 }
-void * control (arg *fd){
+/*void * control (arg *fd){
 	
 	
 	
 
-}
+}*/

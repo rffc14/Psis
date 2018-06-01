@@ -9,16 +9,6 @@
 #define IN 'I'
 #define ON 1
 #define OFF 0
-#define SEM0 "/sem0"
-#define SEM1 "/sem1"
-#define SEM2 "/sem2"
-#define SEM3 "/sem3"
-#define SEM4 "/sem4"
-#define SEM5 "/sem5"
-#define SEM6 "/sem6"
-#define SEM7 "/sem7"
-#define SEM8 "/sem8"
-#define SEM9 "/sem9"
 #define STOP_U "/semup"
 #define STOP_D "/semd"
 #define NOT_UPDATED 0

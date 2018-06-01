@@ -218,7 +218,7 @@ void *d_sendt(void *client_fd){
 }
 
 
-void * sems (void *arg){
+/*void * sems (void *arg){
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
 	sem1 = sem_open(SEM1,O_CREAT,0666,1);
 	sem2 = sem_open(SEM2,O_CREAT,0666,1);
@@ -266,9 +266,9 @@ void * sems (void *arg){
 		if (all9=UPDATED){
 			sem_post(sem9);
 		}
-		*/
+		
 		sem_close(sem0);
-		/*sem_close(sem1);
+		sem_close(sem1);
 		sem_close(sem2);
 		sem_close(sem3);
 		sem_close(sem4);
@@ -276,10 +276,10 @@ void * sems (void *arg){
 		sem_close(sem6);
 		sem_close(sem7);
 		sem_close(sem8);
-		sem_close(sem9);*/
+		sem_close(sem9);
 		pthread_exit(0);
 	
-	}
+	}*/
 }
 void * listen_local(void *arg){
 
@@ -378,32 +378,23 @@ void ctrl_c_callback_handler(int signum){
 	char namesemd[100];
 	sprintf(namesemd, "/semup_%d", getpid());
 	unlink("./CLIPBOARD_SOCKET");
-	sem_close(sem0);
-	sem_close(sem1);
-	sem_close(sem2);
-	sem_close(sem3);
-	sem_close(sem4);
-	sem_close(sem5);
-	sem_close(sem6);
-	sem_close(sem7);
-	sem_close(sem8);
-	sem_close(sem9);
+	
 	sem_close(stop_u);
 	sem_close(stop_d);
 	sem_unlink(namesemup);
 	sem_unlink(namesemd);
 	//sem_unlink(STOP_U);
 	//sem_unlink(STOP_D);
-	sem_unlink(SEM0);
-	sem_unlink(SEM1);
-	sem_unlink(SEM2);
-	sem_unlink(SEM3);
-	sem_unlink(SEM4);
-	sem_unlink(SEM5);
-	sem_unlink(SEM6);
-	sem_unlink(SEM7);
-	sem_unlink(SEM8);
-	sem_unlink(SEM9);
+	sem_unlink("/sem0");
+	sem_unlink("/sem1");
+	sem_unlink("/sem2");
+	sem_unlink("/sem3");
+	sem_unlink("/sem4");
+	sem_unlink("/sem5");
+	sem_unlink("/sem6");
+	sem_unlink("/sem7");
+	sem_unlink("/sem8");
+	sem_unlink("/sem9");
 
 	exit(0);
 }
