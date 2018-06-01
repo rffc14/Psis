@@ -111,6 +111,12 @@ int main(int argc, char *argv[]){
 			printf("Waiting to read...");
 			nbytes = recv(sockin_fd, &data, sizeof(char)*MSG_LIMIT*REGIONS, 0); 
 		}//Initial regions update
+
+		nbytes = recv(sockin_fd, &main_sync_addr, sizeof(main_sync_addr), 0);
+		while(nbytes == -1){
+			printf("Waiting to read...");
+			nbytes = recv(sockin_fd, &main_sync_addr, sizeof(main_sync_addr), 0); 
+		}
 		
 		pthread_t recv_id;
 		pthread_t send_id;
@@ -124,6 +130,52 @@ int main(int argc, char *argv[]){
 		pthread_cancel(send_id);
 	}
 	if(ConnectedMode == OFF){
+		int ret = fork();
+		if(ret == 0) sync();
+
+		struct sockaddr_un local_addr;
+		struct sockaddr_un client_addr;
+		socklen_t size_addr;
+	
+		int SYNC_SOCKET = socket(AF_UNIX, SOCK_STREAM, 0);
+	
+		if (SYNC_SOCKET == -1){ //validaçao de erro
+			perror("socket: ");
+			exit(-1);
+		}
+	
+		local_addr.sun_family = AF_UNIX;
+		sprintf(local_addr.sun_path, "./SYNC_SOCKET");
+
+		int err = bind(SYNC_SOCKET, (struct sockaddr *)&local_addr, sizeof(local_addr));
+		if(err == -1) {
+			perror("Bind: ");
+			exit(-1);
+		}
+	
+		printf("Socket created and binded, READY TO RECEIVE local connections! \n");
+	
+		if(listen(SYNC_SOCKET, 2) == -1) { //quantas posições de espera usamos??
+			perror("listen");
+			exit(-1);
+		}
+		
+		int client_fd = accept(SYNC_SOCKET, (struct sockaddr *) & client_addr, &size_addr);
+
+		if(client_fd == -1) {
+			perror("accept");    
+			exit(-1);
+		}
+
+		check_recv = recv(client_fd, &main_sync_addr, sizeof(main_sync_addr), 0);
+		while(check_recv == -1)
+			check_recv = recv(client_fd, &main_sync_addr, sizeof(main_sync_addr), 0);
+			
+		if(check_recv == 0){ //ligação terminada pelo cliente
+			printf("O SYNC MORREU\n");
+
+
+
 		display_data(data);
 		pthread_create(&thread_sem, NULL, sems,0);
 	}
@@ -426,13 +478,36 @@ void *new_app(void *client_fd){
 	stop_u = sem_open(namesemup,O_CREAT,0666,0);
 	stop_d = sem_open(namesemd,O_CREAT,0666,0);
 
+	struct sockaddr_in sync_addr;
+
+	int sockid = socket(AF_INET, SOCK_STREAM, 0);
+	
+	if(sockid == -1){
+		perror("socket: ");
+		exit(-1);
+	}
+
+	sync_addr.sin_family = AF_INET;
+	sync_addr.sin_port = main_sync_addr.sin_port;
+	sync_addr.sin_addr = main_sync_addr.sin_addr;
+
+	if( -1 == connect(sockid, 
+			(const struct sockaddr *) &sync_addr, 
+			sizeof(sync_addr))){
+				printf("SYNC connecting error\n");
+				exit(-1);
+	}
+	
+	//nbytes = recv(sockin_fd, &data, sizeof(char)*MSG_LIMIT*REGIONS, 0);
+	//while(nbytes == -1){
+	//	printf("Waiting to read...");
+	//	nbytes = recv(sockin_fd, &data, sizeof(char)*MSG_LIMIT*REGIONS, 0); 
+	//}//Initial regions update
+
 
 	printf("Aplicação local conectada.\n");
 	int n;
 	while(1){
-		
-		
-		sem_getvalue(sem0,&n);
 		
 		new_data.option = INVALID_OPTION; /* TO GO OUT WHEN NO NEW_DATA */
 		
@@ -454,6 +529,8 @@ void *new_app(void *client_fd){
 			
 			reg = new_data.region;
 			region = new_data.region;
+
+			
 			
 			/*if (region==0)
 			sem_wait(sem0);
@@ -523,6 +600,14 @@ void *new_rem_clip(void *client_fd){
 		perror("Initial remote update: ");
 		exit(-1);
 	}
+	
+	nbytes = send(client_fd, &main_sync_addr, sizeof(main_sync_addr), 0);
+	if(nbytes<0){
+		perror("SYNC ESTUPIDO");
+		exit(-1);
+	}
+
+
 	pthread_t recv_id;
 	pthread_t send_id;
 	pthread_create(&recv_id, NULL, up_recvt, client_fd);
