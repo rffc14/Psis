@@ -57,8 +57,7 @@ int clips_down=0; // para cima e para baixo na árvore
 int clip_id;
 int status[10];
 int countsent=0;
-//char SEM={{"/sem0"},"/sem1","/sem2","/sem3","/sem4","/sem5","/sem6"
-//,"/sem7","/sem8","/sem9"};
+
 
 int main(int argc, char *argv[]){
 
@@ -82,11 +81,9 @@ int main(int argc, char *argv[]){
 		clips_up = 1;
 		printf("Connecting to %s port %s:\n\n",argv[2],argv[3]);
 
-//void * remote_com(void * arg){
 		int option, region;
 		DATA remote_data;
-	//remote_data.option = INVALID_OPTION; /* TO GO OUT WHEN NO remote_data */
-	//char **argv=(char *)*arg;
+
 		struct sockaddr_in server_addr;
 
 		int sockin_fd= socket(AF_INET, SOCK_STREAM, 0);
@@ -106,7 +103,6 @@ int main(int argc, char *argv[]){
 			(const struct sockaddr *) &server_addr, 
 			sizeof(server_addr))){
 				printf("Remote connecting error\n");
-				//sleep(1);
 				unlink("./CLIPBOARD_SOCKET");
 				exit(-1);
 		}
@@ -121,27 +117,7 @@ int main(int argc, char *argv[]){
 		pthread_t send_id;
 		pthread_create(&recv_id, NULL, d_recvt, sockin_fd);
 		pthread_create(&send_id, NULL, d_sendt, sockin_fd);
-	/*while(1){
-		printf("Ciclo para receber dados remotos:\n");
-		nbytes = recv(sockin_fd, &remote_data, sizeof(remote_data), 0);
-		
-			if(nbytes == 0){ // Clipboard que ao qual se ligou terminou
-				printf("Clipboard remoto desconectado.\n");
-				clips_up--;
-				pthread_exit(0);
-			}
-			if (nbytes>0){
-				sem_wait(sem0);
-				region = remote_data.region;
-				strcpy(data[region],remote_data.characters);
-				printf("This is what we stored in region %d: %s \n", region, data[region]);	
-			display_data(data);
-			}
-		}*/
-	//}//end remote_com
 
-		/*pthread_t remote_com;
-		pthread_create(&remote_com, NULL, remote_com,*argv);*/
 		display_data(data);
 		pthread_create(&thread_sem, NULL, sems,0);
 
@@ -161,7 +137,6 @@ int main(int argc, char *argv[]){
 
 void * d_recvt(void *client_fd){
 
-	//int client_fd=*(int*)arg;  // Ver o que é esta magia
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
 	DATA remote_data;
 	int nbytes,i;
@@ -207,12 +182,9 @@ void * d_recvt(void *client_fd){
 }
 void *d_sendt(void *client_fd){
 
-	//int client_fd=*(int *)arg;
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
-	//char *namesemd = makes_name_sem(STOP_D);
 	char namesemd[100];
 	sprintf(namesemd, "/semd_%d", getpid());
-	//free(namesemd);
 	stop_d = sem_open(namesemd,O_CREAT,0666,0);
 	int nbytes;
 	int check_recv, option;
@@ -229,10 +201,7 @@ void *d_sendt(void *client_fd){
 				remote_data.region=reg;
 		   
 				nbytes=send(client_fd, &remote_data, sizeof(remote_data), 0);
-				//printf("Esperando confirmação\n");
-				//check_recv = recv(client_fd, &status[region], sizeof(status), 0);
-				//printf("Recebida a confirmação\n");
-				//falta enviar para clipboards ligados a ele (no up?)
+
 				if(nbytes<=0) printf("UPS!\n");
 				else{
 					status[reg] == UPDATED;
@@ -398,8 +367,6 @@ void * listen_remote(void *arg){
 }
 void ctrl_c_callback_handler(int signum){
 	printf("Caught signal Ctr-C\n");
-	//char *namesemup = makes_name_sem(STOP_U);
-	//char *namesemd = makes_name_sem(STOP_D);
 	char namesemup[100];
 	sprintf(namesemup, "/semd_%d", getpid());
 	char namesemd[100];
@@ -432,14 +399,11 @@ void ctrl_c_callback_handler(int signum){
 	sem_unlink(SEM8);
 	sem_unlink(SEM9);
 
-	//free(namesemup);
-	//free(namesemd);
 	exit(0);
 }
 
 void *new_app(void *client_fd){
 	app++;
-	//int client_fd=*(int *)arg;
 	DATA new_data;
 	int check_recv, option, region;
 	int nbytes;
@@ -450,8 +414,6 @@ void *new_app(void *client_fd){
 	sprintf(namesemd, "/semd_%d", getpid());
 	char namesemup[100];
 	sprintf(namesemup, "/semup_%d", getpid());
-	//char *namesemup = makes_name_sem(STOP_U);
-	//char *namesemd = makes_name_sem(STOP_D);
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
 	sem1 = sem_open(SEM1,O_CREAT,0666,1);
 	sem2 = sem_open(SEM2,O_CREAT,0666,1);
@@ -464,11 +426,7 @@ void *new_app(void *client_fd){
 	sem9 = sem_open(SEM9,O_CREAT,0666,1);
 	stop_u = sem_open(namesemup,O_CREAT,0666,0);
 	stop_d = sem_open(namesemd,O_CREAT,0666,0);
-	//stop_u = sem_open(STOP_U,O_CREAT,0666,0);
-	//stop_d = sem_open(STOP_D,O_CREAT,0666,0);
 
-	//free(namesemup);
-	//free(namesemd);
 
 	printf("Aplicação local conectada.\n");
 	int n;
@@ -527,10 +485,7 @@ void *new_app(void *client_fd){
 			rec_d = 0;
 			rec_u = 0;
 			countsent = clips_down;
-			//for(i = 0; i < clips_down; i++){
-			//	printf("clips: %d\n", clips_down);
-			//	sem_post(stop_u);
-			//}
+
 			if(clips_up == 1)
 				sem_post(stop_d);
 			else {
@@ -557,7 +512,7 @@ void *new_app(void *client_fd){
 
 void *new_rem_clip(void *client_fd){
 	
-	//int client_fd=*arg;
+
 	int nbytes;
 	
 	clips_down++;
@@ -579,14 +534,10 @@ void *new_rem_clip(void *client_fd){
 
 }
 void * up_recvt(void * client_fd){
-	//int client_fd=*(int *)arg;
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
-	//char *namesemu = makes_name_sem(STOP_U);
 	char namesemup[100];
 	sprintf(namesemup, "/semup_%d", getpid());
 	stop_u = sem_open(namesemup,O_CREAT,0666,0);
-	//free(namesemu);
-	//stop_u = sem_open(STOP_U,O_CREAT,0666,0);
 	DATA remote_data;
 	int check_recv, option;
 	int nbytes, i;
@@ -627,22 +578,17 @@ void * up_recvt(void * client_fd){
 
 		while(status[reg]==NOT_UPDATED);
 
-		//nbytes=send(client_fd, &status[region], sizeof(status[region]), 0);
-		//rec_u=0;
+
 	}
 }
 void * up_sendt(void * client_fd){
 
 	DATA send_data;
-	//int client_fd=*(int *)arg;
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
-	//char *namesemu = makes_name_sem(STOP_U);
 	char namesemup[100];
 	sprintf(namesemup, "/semup_%d", getpid());
 	stop_u = sem_open(namesemup,O_CREAT,0666,0);
-	//free(namesemu);
-	
-	//stop_u = sem_open(STOP_U,O_CREAT,0666,0);
+
 	int nbytes;
 	int check_recv;
 	printf("EU ESTOU AQUI up_sendt!!\n");
@@ -662,11 +608,10 @@ void * up_sendt(void * client_fd){
 			printf("COUNTSET%d\n", countsent);
 			while(countsent>0);
 			if(countsent == 0) status[reg] = UPDATED;
-			//if(countsent == 0) status[0] = UPDATED;
+	
 
 			printf("SAÍ DO CICLO!\n countset - %d\n", countsent);
 		}
-		//check_recv = recv(client_fd, &status[0], sizeof(status[0]), 0);
 	
 	}
 }
