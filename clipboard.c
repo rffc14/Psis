@@ -1,6 +1,28 @@
 
 #include "clip_lib.h"	
-
+int rec_d=0;
+int rec_u=0;
+struct sockaddr_in main_sync_addr;
+sem_t *sem0;
+sem_t *sem1;
+sem_t *sem2;
+sem_t *sem3;
+sem_t *sem4;
+sem_t *sem5;
+sem_t *sem6;
+sem_t *sem7;
+sem_t *sem8;
+sem_t *sem9;
+sem_t *stop_u;
+sem_t *stop_d;
+int reg;
+int app = 0;
+int clips_up=0;  //cada clipboard regista a quem está ligado
+int clips_down=0; // para cima e para baixo na árvore
+int clip_id;
+int status[10];
+int countsent=0;
+char data[REGIONS][MSG_LIMIT];
 
 
 int main(int argc, char *argv[]){
@@ -69,7 +91,7 @@ int main(int argc, char *argv[]){
 		pthread_create(&send_id, NULL, d_sendt, sockin_fd);
 
 		display_data(data);
-		pthread_create(&thread_sem, NULL, sems,0);
+		//pthread_create(&thread_sem, NULL, sems,0);
 
 		pthread_join(recv_id, NULL);
 		pthread_cancel(send_id);
@@ -95,20 +117,26 @@ int main(int argc, char *argv[]){
 		int err = bind(SYNC_SOCKET, (struct sockaddr *)&local_addr, sizeof(local_addr));
 		if(err == -1) {
 			perror("Bind: ");
+			unlink("/SYNC_SOCKET");
+			unlink("./CLIPBOARD_SOCKET");
 			exit(-1);
 		}
 	
-		printf("Socket created and binded, READY TO RECEIVE local connections! \n");
+		printf("sync ligado e binded\n");
 	
 		if(listen(SYNC_SOCKET, 2) == -1) { //quantas posições de espera usamos??
 			perror("listen");
+			unlink("/SYNC_SOCKET");
+			unlink("./CLIPBOARD_SOCKET");
 			exit(-1);
 		}
 		
 		int client_fd = accept(SYNC_SOCKET, (struct sockaddr *) & client_addr, &size_addr);
 
 		if(client_fd == -1) {
-			perror("accept");    
+			unlink("/SYNC_SOCKET");
+			unlink("./CLIPBOARD_SOCKET");
+			perror("accept do sync");    
 			exit(-1);
 		}
 
@@ -122,7 +150,7 @@ int main(int argc, char *argv[]){
 
 
 		display_data(data);
-		pthread_create(&thread_sem, NULL, sems,0);
+		//pthread_create(&thread_sem, NULL, sems,0);
 	}
 
 
@@ -143,7 +171,7 @@ int main(int argc, char *argv[]){
 
 void * d_recvt(void *client_fd){
 
-	sem0 = sem_open(SEM0,O_CREAT,0666,1);
+	//sem0 = sem_open(SEM0,O_CREAT,0666,1);
 	DATA remote_data;
 	int nbytes,i;
 	int check_recv, option;
@@ -188,7 +216,7 @@ void * d_recvt(void *client_fd){
 }
 void *d_sendt(void *client_fd){
 
-	sem0 = sem_open(SEM0,O_CREAT,0666,1);
+	//sem0 = sem_open(SEM0,O_CREAT,0666,1);
 	char namesemd[100];
 	sprintf(namesemd, "/semd_%d", getpid());
 	stop_d = sem_open(namesemd,O_CREAT,0666,0);
@@ -279,8 +307,8 @@ void *d_sendt(void *client_fd){
 		sem_close(sem9);
 		pthread_exit(0);
 	
-	}*/
-}
+	}
+}*/
 void * listen_local(void *arg){
 
 	struct sockaddr_un local_addr;
@@ -378,7 +406,7 @@ void ctrl_c_callback_handler(int signum){
 	char namesemd[100];
 	sprintf(namesemd, "/semup_%d", getpid());
 	unlink("./CLIPBOARD_SOCKET");
-	
+	unlink("/SYNC_SOCKET");
 	sem_close(stop_u);
 	sem_close(stop_d);
 	sem_unlink(namesemup);
@@ -395,6 +423,7 @@ void ctrl_c_callback_handler(int signum){
 	sem_unlink("/sem7");
 	sem_unlink("/sem8");
 	sem_unlink("/sem9");
+	
 
 	exit(0);
 }

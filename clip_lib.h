@@ -33,28 +33,6 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-int rec_d=0;
-int rec_u=0;
-struct sockaddr_in main_sync_addr;
-sem_t *sem0;
-sem_t *sem1;
-sem_t *sem2;
-sem_t *sem3;
-sem_t *sem4;
-sem_t *sem5;
-sem_t *sem6;
-sem_t *sem7;
-sem_t *sem8;
-sem_t *sem9;
-sem_t *stop_u;
-sem_t *stop_d;
-int reg;
-int app = 0;
-int clips_up=0;  //cada clipboard regista a quem está ligado
-int clips_down=0; // para cima e para baixo na árvore
-int clip_id;
-int status[10];
-int countsent=0;
 
 
 typedef struct data {
@@ -64,7 +42,7 @@ typedef struct data {
 }DATA;
 
 
-char data[REGIONS][MSG_LIMIT];
+
 void *listen_remote(void *arg);
 void *new_app(void *arg);
 void *listen_local(void *arg);
@@ -72,7 +50,7 @@ void ctrl_c_callback_handler(int signum);
 int check_mode(int argc, char *argv[]);
 char* makes_name_sem(char *sem);
 void *new_rem_clip(void *arg);
-void * sems (void *arg);
+//void * sems (void *arg);
 void * remote_com(void * arg);
 void * up_sendt(void * arg);
 void * up_recvt(void * arg);

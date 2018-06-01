@@ -5,19 +5,11 @@
 #include "clipboard.h"
 #include <time.h>
 sem_t *sems[10];
-sem_t *sem0;
-sem_t *sem1;
-sem_t *sem2;
-sem_t *sem3;
-sem_t *sem4;
-sem_t *sem5;
-sem_t *sem6;
-sem_t *sem7;
-sem_t *sem8;
-sem_t *sem9;
+int connections;
+void * new_sync_app (void *client_fd);
 
 void sync(void){
-	i=1;
+	int i=1;
 	char str[5];
 	for (i=0;i<10;i++){
 		sprintf(str,"/sem%d",i);
@@ -44,9 +36,11 @@ void sync(void){
 	int err_c = connect(sock_fd, (const struct sockaddr *) &server_addr, sizeof(server_addr));
 	if(err_c==-1){
 		perror("Connecting: ");
+		unlink("/SYNC_SOCKET");
+		unlink("./CLIPBOARD_SOCKET");
 		return -1;
 	}
-
+	connections++;
 	//===========Comunicação com o clipboard em singel mode========================
 
 
@@ -75,22 +69,24 @@ void sync(void){
 
 	if(err == -1) {
     	perror("Sync sock bind");
+		unlink("/SYNC_SOCKET");
+		unlink("./CLIPBOARD_SOCKET");
     	exit(-1);
   	}
 	pthread_t thread_id[100];
-	pthread_t control_id;
-	mkfifo("WAITING_0", 0666);
-	fd_0=open("WAITING_0", O_RDONLY);
-	if(fd ==-1){
+	//pthread_t control_id;
+	//mkfifo("WAITING_0", 0666);
+	//fd_0=open("WAITING_0", O_RDONLY);
+	/*if(fd ==-1){
 		perror("open ");
 		exit(-1);
-	}
+	}*/
 	if(listen(recv_sock, 5) == -1) {
 		perror("listen");
 		exit(-1);
 	}
 	int cnt=0;
-	pthread_create(&control_id, NULL, control, fd_0);
+	//pthread_create(&control_id, NULL, control, fd_0);
 	while(1){
 		int client_fd= accept(recv_sock, (struct sockaddr *) & client_addr, &size_addr); //bloqueia até ter clientes
 	
@@ -106,9 +102,9 @@ void sync(void){
 
 }
 
-void * new_sync_app (arg *client_fd){
+void * new_sync_app (void *client_fd){
 
-	i=1;
+	int i=1;
 	char str[5];
 	for (i=0;i<10;i++){
 		sprintf(str,"/sem%d",i);
@@ -132,74 +128,74 @@ void * new_sync_app (arg *client_fd){
 		//write(fd, &t_id, sizeof(t_id));
 		
 		if (reg_sync==0){
-			sem_wait(sem[0]);
+			sem_wait(sems[0]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[0]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[0]);
 		}
 		if (reg_sync==1){
-			sem_wait(sem[1]);
+			sem_wait(sems[1]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[1]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[1]);
 		}
 		if (reg_sync==2){
-			sem_wait(sem[2]);
+			sem_wait(sems[2]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[2]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[2]);
 		}
 		if (reg_sync==3){
-			sem_wait(sem[3]);
+			sem_wait(sems[3]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[3]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[3]);
 		}
 		if (reg_sync==4){
-			sem_wait(sem[4]);
+			sem_wait(sems[4]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[4]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[4]);
 		}
 		if (reg_sync==5){
-			sem_wait(sem[5]);
+			sem_wait(sems[5]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[5]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[5]);
 		}
 		if (reg_sync==6){
-			sem_wait(sem[6]);
+			sem_wait(sems[6]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[6]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[6]);
 		}
 		if (reg_sync==7){
-			sem_wait(sem[7]);
+			sem_wait(sems[7]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[7]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[7]);
 		}
 		if (reg_sync==8){
-			sem_wait(sem[8]);
+			sem_wait(sems[8]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[8]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[8]);
 		}
 		if (reg_sync==9){
-			sem_wait(sem[9]);
+			sem_wait(sems[9]);
 			//read(f_0, pthread_id_np_t);
 			permission=1;
-			nbytes = send((client_fd, &permission, sizeof(int), 0));
-			sem_post(sem[9]);
+			nbytes = send(client_fd, &permission, sizeof(int), 0);
+			sem_post(sems[9]);
 		}
 
 	
