@@ -23,7 +23,6 @@ void display_data(char data[REGIONS][MSG_LIMIT]);
 int rec_d=0;
 int rec_u=0;
 struct sockaddr_in main_sync_addr;
-int CLIPBOARD_SOCKET;
 #define SEM0 "/sem0"
 #define SEM1 "/sem1"
 #define SEM2 "/sem2"
@@ -283,7 +282,7 @@ void * listen_local(void *arg){
 
 	pthread_t thread_local_id[10];
 	
-	CLIPBOARD_SOCKET = socket(AF_UNIX, SOCK_STREAM, 0);
+	int CLIPBOARD_SOCKET = socket(AF_UNIX, SOCK_STREAM, 0);
 	
 	if (CLIPBOARD_SOCKET == -1){ //validaçao de erro
 		perror("socket: ");
