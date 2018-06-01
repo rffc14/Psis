@@ -459,6 +459,7 @@ void *new_app(void *client_fd){
 	int check_recv, option, region;
 	int nbytes;
 	int sock_net, i;
+	int permission = 0;
 	char namesemd[100];
 	struct timespec time;
 	int time_stamp;
@@ -498,11 +499,6 @@ void *new_app(void *client_fd){
 				exit(-1);
 	}
 	
-	//nbytes = recv(sockin_fd, &data, sizeof(char)*MSG_LIMIT*REGIONS, 0);
-	//while(nbytes == -1){
-	//	printf("Waiting to read...");
-	//	nbytes = recv(sockin_fd, &data, sizeof(char)*MSG_LIMIT*REGIONS, 0); 
-	//}//Initial regions update
 
 
 	printf("Aplicação local conectada.\n");
@@ -521,47 +517,29 @@ void *new_app(void *client_fd){
 			sem_close(sem0);
 			pthread_exit(0);
 		}
-		//clock_gettime(CLOCK_REALTIME,&time);
-		//time_stamp=time.tv_nsec;
+		
 		option = new_data.option;
 
 		if (option == COPY){
 			
 			reg = new_data.region;
-
-
 			
+			nbytes = send(sockid, &reg, sizeof(reg), 0);
+			if (nbytes<=0){
+				printf("SYNC AVAILABLE\n");
+				return 0;
+			}
+			while(permission == 0){
+				nbytes = recv(sockid, &permission, sizeof(permission), 0);
+				if(nbytes == -1){
+					printf("Waiting to read...");
+					nbytes = recv(sockid, &permission, sizeof(permission), 0); 
+				}
+			}
 			
-			
-			// verificar permissao
-			// recv
-			if (reg==0)
-
-			sem_wait(sem0);
-			if (reg==1)
-			sem_wait(sem1);
-			if (reg==2)
-			sem_wait(sem2);			
-			if (reg==3)
-			sem_wait(sem3);
-			if (reg==4)
-			sem_wait(sem4);
-			if (reg==5)
-			sem_wait(sem5);
-			if (reg==6)
-			sem_wait(sem6);
-			if (reg==7)
-			sem_wait(sem7);
-			if (reg==8)
-			sem_wait(sem8);
-			if (reg==9)
-			sem_wait(sem9);
-
 			strcpy(data[reg],new_data.characters);
 			status[reg]=NOT_UPDATED;
-			//if (clips_down>0){
-			//	sem_post(stop_u);
-			//}
+		
 			rec_d = 0;
 			rec_u = 0;
 			countsent = clips_down;
@@ -693,12 +671,12 @@ void * up_sendt(void * client_fd){
 			printf("Enviados %d bytes\n",nbytes);
 			// cena para averiguar que se mandou a todos os clips abaixo
 			countsent--;
-			printf("COUNTSET%d\n", countsent);
+			printf("COUNTSENT%d\n", countsent);
 			while(countsent>0);
 			if(countsent == 0) status[reg] = UPDATED;
 	
 
-			printf("SAÍ DO CICLO!\n countset - %d\n", countsent);
+			printf("SAÍ DO CICLO!\n countsent - %d\n", countsent);
 		}
 	
 	}
