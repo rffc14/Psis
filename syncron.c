@@ -1,4 +1,32 @@
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include "clip_lib.h"	
+#include "clipboard.h"
+#include <time.h>
+#define SEM0 "/sem0"
+#define SEM1 "/sem1"
+#define SEM2 "/sem2"
+#define SEM3 "/sem3"
+#define SEM4 "/sem4"
+#define SEM5 "/sem5"
+#define SEM6 "/sem6"
+#define SEM7 "/sem7"
+#define SEM8 "/sem8"
+#define SEM9 "/sem9"
+
+
 void sync(void){
+	sem_t *sem0;
+	sem_t *sem1;
+	sem_t *sem2;
+	sem_t *sem3;
+	sem_t *sem4;
+	sem_t *sem5;
+	sem_t *sem6;
+	sem_t *sem7;
+	sem_t *sem8;
+	sem_t *sem9;
 
 	sem0 = sem_open(SEM0,O_CREAT,0666,1);
 	sem1 = sem_open(SEM1,O_CREAT,0666,1);
@@ -85,18 +113,4 @@ void sync(void){
 
 
 	}		
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
