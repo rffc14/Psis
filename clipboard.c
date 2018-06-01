@@ -142,15 +142,21 @@ int main(int argc, char *argv[]){
 
 		/*pthread_t remote_com;
 		pthread_create(&remote_com, NULL, remote_com,*argv);*/
+		display_data(data);
+		pthread_create(&thread_sem, NULL, sems,0);
+
+		pthread_join(recv_id, NULL);
+		pthread_cancel(send_id);
 	}
-	display_data(data);
-	pthread_create(&thread_sem, NULL, sems,0);
+	if(ConnectedMode == OFF){
+		display_data(data);
+		pthread_create(&thread_sem, NULL, sems,0);
+	}
 
 
-	
-	
 	pthread_join(thread_id[0],NULL); // a main thread espera pela listen local	
 	pthread_join(thread_id[1],NULL);
+	
 } //main end
 
 void * d_recvt(void *client_fd){
@@ -567,6 +573,10 @@ void *new_rem_clip(void *client_fd){
 	pthread_t send_id;
 	pthread_create(&recv_id, NULL, up_recvt, client_fd);
 	pthread_create(&send_id, NULL, up_sendt, client_fd);
+
+	pthread_join(recv_id, NULL);
+	pthread_cancel(send_id);
+
 }
 void * up_recvt(void * client_fd){
 	//int client_fd=*(int *)arg;
