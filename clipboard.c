@@ -453,7 +453,8 @@ void *new_app(void *client_fd){
 		if (option == COPY){
 			
 			reg = new_data.region;
-			
+			// verificar permissao
+			// recv
 			if (reg==0)
 			sem_wait(sem0);
 			if (reg==1)
