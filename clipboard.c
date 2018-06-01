@@ -484,8 +484,30 @@ void *new_app(void *client_fd){
 		option = new_data.option;
 
 		if (option == COPY){
-			//sem_wait(sem0);
+			
 			region = new_data.region;
+
+			if (region==0)
+			sem_wait(sem0);
+			if (region==1)
+			sem_wait(sem1);
+			if (region==2)
+			sem_wait(sem2);
+			if (region==3)
+			sem_wait(sem3);
+			if (region==4)
+			sem_wait(sem4);
+			if (region==5)
+			sem_wait(sem5);
+			if (region==6)
+			sem_wait(sem6);
+			if (region==7)
+			sem_wait(sem7);
+			if (region==8)
+			sem_wait(sem8);
+			if (region==9)
+			sem_wait(sem9);
+
 			strcpy(data[region],new_data.characters);
 			status[region]=NOT_UPDATED;
 	
@@ -556,14 +578,15 @@ void * up_recvt(void * client_fd){
 			pthread_exit(0);
 		}
 		rec_u=1;
-		status[0]=NOT_UPDATED;
+		
 		printf("Averificar se recebe\n");
 
 		region = remote_data.region;
+		status[region]=NOT_UPDATED;
 		strcpy(data[region],remote_data.characters);
 		printf("Updated with remote data\n");	
 		display_data(data);
-		if(clips_up == 0 && clips_down == 1) status[0] = UPDATED;
+		if(clips_up == 0 && clips_down == 1) status[region] = UPDATED;
 		if(clips_down > 1){
 		//	countsent = clips_down;
 		//	while(countsent != 0){ sem_post(stop_u); sleep(1);}
