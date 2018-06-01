@@ -453,31 +453,30 @@ void *new_app(void *client_fd){
 		if (option == COPY){
 			
 			reg = new_data.region;
-			region = new_data.region;
 			
-			/*if (region==0)
+			if (reg==0)
 			sem_wait(sem0);
-			if (region==1)
+			if (reg==1)
 			sem_wait(sem1);
-			if (region==2)
+			if (reg==2)
 			sem_wait(sem2);			
-			if (region==3)
+			if (reg==3)
 			sem_wait(sem3);
-			if (region==4)
+			if (reg==4)
 			sem_wait(sem4);
-			if (region==5)
+			if (reg==5)
 			sem_wait(sem5);
-			if (region==6)
+			if (reg==6)
 			sem_wait(sem6);
-			if (region==7)
+			if (reg==7)
 			sem_wait(sem7);
-			if (region==8)
+			if (reg==8)
 			sem_wait(sem8);
-			if (region==9)
-			sem_wait(sem9);*/
+			if (reg==9)
+			sem_wait(sem9);
 
-			strcpy(data[region],new_data.characters);
-			status[region]=NOT_UPDATED;
+			strcpy(data[reg],new_data.characters);
+			status[reg]=NOT_UPDATED;
 			//if (clips_down>0){
 			//	sem_post(stop_u);
 			//}
@@ -495,12 +494,12 @@ void *new_app(void *client_fd){
 
 			printf("\nMESSAGE RECEIVED: %s\n", new_data.characters);
 			printf("COPY OPTION\n");
-			printf("This is what we stored in region %d: %s \n", region, data[region]);	
+			printf("This is what we stored in region %d: %s \n", reg, data[reg]);	
 			display_data(data);
 		
 		}else if(option == PASTE){
-			region = new_data.region;
-			nbytes = send(client_fd, data[region], sizeof(data[region]), 0); 
+			reg = new_data.region;
+			nbytes = send(client_fd, data[reg], sizeof(data[reg]), 0); 
 			if(nbytes<0){
 				perror("write error");
 				exit(-1);
