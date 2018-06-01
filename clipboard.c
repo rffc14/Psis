@@ -1,68 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <semaphore.h>
+
 #include "clip_lib.h"	
-#include "clipboard.h"
-#include <time.h>
-char data[REGIONS][MSG_LIMIT];
-void *listen_remote(void *arg);
-void *new_app(void *arg);
-void *listen_local(void *arg);
-void ctrl_c_callback_handler(int signum);
-int check_mode(int argc, char *argv[]);
-char* makes_name_sem(char *sem);
-void *new_rem_clip(void *arg);
-void * sems (void *arg);
-void * remote_com(void * arg);
-void * up_sendt(void * arg);
-void * up_recvt(void * arg);
-void * d_sendt(void * arg);
-void * d_recvt(void * arg);
-void display_data(char data[REGIONS][MSG_LIMIT]);
-int rec_d=0;
-int rec_u=0;
-struct sockaddr_in main_sync_addr;
-#define SEM0 "/sem0"
-#define SEM1 "/sem1"
-#define SEM2 "/sem2"
-#define SEM3 "/sem3"
-#define SEM4 "/sem4"
-#define SEM5 "/sem5"
-#define SEM6 "/sem6"
-#define SEM7 "/sem7"
-#define SEM8 "/sem8"
-#define SEM9 "/sem9"
-#define STOP_U "/semup"
-#define STOP_D "/semd"
-#define NOT_UPDATED 0
-#define UPDATED 1
-sem_t *sem0;
-sem_t *sem1;
-sem_t *sem2;
-sem_t *sem3;
-sem_t *sem4;
-sem_t *sem5;
-sem_t *sem6;
-sem_t *sem7;
-sem_t *sem8;
-sem_t *sem9;
-sem_t *stop_u;
-sem_t *stop_d;
-int reg;
-int app = 0;
-int clips_up=0;  //cada clipboard regista a quem está ligado
-int clips_down=0; // para cima e para baixo na árvore
-int clip_id;
-int status[10];
-int countsent=0;
+
 
 
 int main(int argc, char *argv[]){
 
 	int ConnectedMode=OFF;
 	int sock_net;
-	int i;
+	int i, nbytes;
 	for (i=0;i<10;i++){
 		status[i]=UPDATED;
 	}
@@ -167,13 +112,13 @@ int main(int argc, char *argv[]){
 			exit(-1);
 		}
 
-		check_recv = recv(client_fd, &main_sync_addr, sizeof(main_sync_addr), 0);
-		while(check_recv == -1)
-			check_recv = recv(client_fd, &main_sync_addr, sizeof(main_sync_addr), 0);
+		nbytes = recv(client_fd, &main_sync_addr, sizeof(main_sync_addr), 0);
+		while(nbytes == -1)
+			nbytes = recv(client_fd, &main_sync_addr, sizeof(main_sync_addr), 0);
 			
-		if(check_recv == 0){ //ligação terminada pelo cliente
+		if(nbytes == 0){ //ligação terminada pelo cliente
 			printf("O SYNC MORREU\n");
-
+		}
 
 
 		display_data(data);
@@ -184,7 +129,17 @@ int main(int argc, char *argv[]){
 	pthread_join(thread_id[0],NULL); // a main thread espera pela listen local	
 	pthread_join(thread_id[1],NULL);
 	
-} //main end
+	return 0;
+	
+}
+
+
+
+
+
+
+
+
 
 void * d_recvt(void *client_fd){
 
@@ -456,26 +411,16 @@ void ctrl_c_callback_handler(int signum){
 void *new_app(void *client_fd){
 	app++;
 	DATA new_data;
-	int check_recv, option, region;
+	int check_recv, option;
 	int nbytes;
 	int sock_net, i;
 	int permission = 0;
 	char namesemd[100];
 	struct timespec time;
-	int time_stamp;
 	sprintf(namesemd, "/semd_%d", getpid());
 	char namesemup[100];
 	sprintf(namesemup, "/semup_%d", getpid());
-	sem0 = sem_open(SEM0,O_CREAT,0666,1);
-	sem1 = sem_open(SEM1,O_CREAT,0666,1);
-	sem2 = sem_open(SEM2,O_CREAT,0666,1);
-	sem3 = sem_open(SEM3,O_CREAT,0666,1);
-	sem4 = sem_open(SEM4,O_CREAT,0666,1);
-	sem5 = sem_open(SEM5,O_CREAT,0666,1);
-	sem6 = sem_open(SEM6,O_CREAT,0666,1);
-	sem7 = sem_open(SEM7,O_CREAT,0666,1);
-	sem8 = sem_open(SEM8,O_CREAT,0666,1);
-	sem9 = sem_open(SEM9,O_CREAT,0666,1);
+
 	stop_u = sem_open(namesemup,O_CREAT,0666,0);
 	stop_d = sem_open(namesemd,O_CREAT,0666,0);
 
@@ -514,7 +459,6 @@ void *new_app(void *client_fd){
 		if(check_recv == 0){ //ligação terminada pelo cliente
 			printf("Aplicação local desconectada.\n");
 			app--;
-			sem_close(sem0);
 			pthread_exit(0);
 		}
 		
@@ -600,7 +544,6 @@ void *new_rem_clip(void *client_fd){
 
 }
 void * up_recvt(void * client_fd){
-	sem0 = sem_open(SEM0,O_CREAT,0666,1);
 	char namesemup[100];
 	sprintf(namesemup, "/semup_%d", getpid());
 	stop_u = sem_open(namesemup,O_CREAT,0666,0);
@@ -611,7 +554,6 @@ void * up_recvt(void * client_fd){
 
 	while(1){
 		printf("DE NOVO AQUI!\n");
-		//remote_data.option = INVALID_OPTION; /* TO GO OUT WHEN NO remote_data */
 		check_recv = recv(client_fd, &remote_data, sizeof(remote_data), 0);
 		if (check_recv == -1){
 			perror("Reveiving remote data in UP: ");
@@ -633,7 +575,6 @@ void * up_recvt(void * client_fd){
 		display_data(data);
 		countsent = clips_down;
 		if(clips_up == 1) { rec_d = 0; sem_post(stop_d);}
-		//else if(clips_down == 1) status[0] = UPDATED;
 		else if(clips_down >= 1){
 			rec_u = 0;
 			for(i = 0; i < clips_down; i++)	sem_post(stop_u);
@@ -650,7 +591,6 @@ void * up_recvt(void * client_fd){
 void * up_sendt(void * client_fd){
 
 	DATA send_data;
-	sem0 = sem_open(SEM0,O_CREAT,0666,1);
 	char namesemup[100];
 	sprintf(namesemup, "/semup_%d", getpid());
 	stop_u = sem_open(namesemup,O_CREAT,0666,0);
@@ -723,3 +663,20 @@ void display_data(char data[REGIONS][MSG_LIMIT])
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

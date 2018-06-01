@@ -1,6 +1,12 @@
 
-#include "clip_lib.h"
 #include "clipboard.h"
+
+typedef struct data {
+	char characters[MSG_LIMIT];
+	int region;
+	int option;
+}DATA;
+
 int clipboard_connect(char * clipboard_dir){
 	
 	struct sockaddr_un server_addr;
