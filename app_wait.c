@@ -11,8 +11,8 @@
 int main(void){
 
 	char buf[MSG_LIMIT];
-	int option;
-	int region = 2;
+	int option = WAIT;
+	int region;
 	void *pointer;
 	int n;
 
@@ -22,12 +22,13 @@ int main(void){
 		exit(-1);
 	}
 
-
-	while(1){
-		printf("WAIT(2)? (Press 9 for exit)\n");
-		scanf("%d", &option); // le opcao
+	printf("REGION: \n");
+		scanf("%d", &region); // region
          	while(getchar()!='\n'); //limpa o buffer
 
+
+	while(1){
+	
 	
 		if(option == WAIT){ 
 			printf("Which region will you wait for?\n");
