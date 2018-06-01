@@ -31,8 +31,10 @@
 int main(void){
 
 	char buf[MSG_LIMIT];
-	int option;
+	int i;
+	int option = COPY;
 	int region;
+	int copys;
 	void *pointer;
 	int n;
 
@@ -45,37 +47,19 @@ int main(void){
 
 	while(1){	
 		printf("COPY (0) QUANTAS VEZES? (Press 9 for exit)\n");
-		scanf("%d", &option); // le opcao
+		scanf("%d", &copys); // le opcao
             	while(getchar()!='\n'); //limpa o buffer
-
-		if (option == COPY){
-			printf("\n\nYOU CHOSE COPY OPTION\n");
-			printf("What do you want to copy?\n");
-
-			fgets(buf, MSG_LIMIT, stdin);
-			strtok(buf, "\n");
 		
-			printf("Which region?\n");
-			scanf("%d", &region);
+		printf("Which region?\n");
+		scanf("%d", &region);
 			
+		for(i = 0; i < copys; i++)
+		{
+			sprintf(buf,"%d", i);
 			pointer = buf;
 			n=clipboard_copy(clipboard_id,region,pointer,sizeof(buf));
 			if (n==0) printf("COPY ERROR\n");
-			
-		}else if(option == PASTE){ 
-			printf("\n\nYOU CHOSE PASTE OPTION\n");
-			printf("Which region?\n");
-			scanf("%d", &region);
-
-			pointer = buf;
-			n = clipboard_paste(clipboard_id,region,pointer,sizeof(buf));
-			if (n==0) printf("COPY ERROR\n");
-			else printf("String pasted on Clipboard: %s\n", (char *)pointer);
-
-				
-		}else if(option==QUIT){
-			clipboard_close(clipboard_id);
-			exit(0);
-		}else printf("Option error\n");
+		}
+	
 	}	
 }
