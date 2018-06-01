@@ -63,7 +63,7 @@ void sync(void){
 		return -1;
 	}
 
-	
+	//===========Comunicação com o clipboard em singel mode========================
 
 
 
@@ -79,13 +79,13 @@ void sync(void){
   	sync_addr.sin_port= htons(port);
 	sync_addr.sin_addr.s_addr= INADDR_ANY; 
 
-	
+	//=========Enviar o endereço do sync====================
 	int n = send(sock_fd, &sync_addr, sizeof(sync_addr), 0);
 	if (n<=0){
 		printf("CLIPBOARD NOT AVAILABLE\n");
 		return 0;
 	}
-
+	//======================================================
 
 	int err = bind(recv_sock,(struct sockaddr *)&sync_addr, sizeof(sync_addr));
 
@@ -99,7 +99,7 @@ void sync(void){
 		perror("listen");
 		exit(-1);
 	}
-
+	int cnt=0;
 	while(1){
 		int client_fd= accept(recv_sock, (struct sockaddr *) & client_addr, &size_addr); //bloqueia até ter clientes
 	
@@ -107,10 +107,16 @@ void sync(void){
 			perror("accept");    
 			exit(-1);
 		}
-
-		
-
-
-
+		sprintf(str, "thread_%d",cnt);
+		pthread_t str;
+		cnt++;
+		pthread_create(&(thread_local_id[app]), NULL, new_app, client_fd);
+	
 	}		
+
+}
+
+void * new_sync_app (arg *client_fd){
+
+
 }
